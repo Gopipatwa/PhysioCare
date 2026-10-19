@@ -154,25 +154,25 @@ private fun DrawScope.drawFigure(
 
     // ---- Body ----
     val back = if (front) main else dim
-    fun limb(c: Color, vararg pts: Offset) {
+    fun limb(c: Color, pts: List<Offset>) {
         for (i in 0 until pts.size - 1) drawLine(c, m(pts[i]), m(pts[i + 1]), stroke, StrokeCap.Round)
     }
     // far side first (lighter), so the near side reads on top
-    limb(back, lHp, lKn, lAn, lTo)
-    limb(back, lSh, lEl, lHa)
+    limb(back, listOf(lHp, lKn, lAn, lTo))
+    limb(back, listOf(lSh, lEl, lHa))
     // trunk
-    limb(main, Offset.Zero, neck)
+    limb(main, listOf(Offset.Zero, neck))
     if (front) {
-        limb(main, lSh, rSh)
-        limb(main, lHp, rHp)
+        limb(main, listOf(lSh, rSh))
+        limb(main, listOf(lHp, rHp))
     }
-    limb(main, neck, head - dir(180f - tr - p.head) * HEAD_R)
+    limb(main, listOf(neck, head - dir(180f - tr - p.head) * HEAD_R))
     drawCircle(main, HEAD_R * s, m(head))
     // small dot shows which way the person is facing in side views
     if (!front) drawCircle(accent, HEAD_R * s * 0.3f, m(head + dir(90f - tr - p.head) * (HEAD_R * 0.5f)))
     // near side
-    limb(main, rHp, rKn, rAn, rTo)
-    limb(main, rSh, rEl, rHa)
+    limb(main, listOf(rHp, rKn, rAn, rTo))
+    limb(main, listOf(rSh, rEl, rHa))
     drawCircle(main, stroke * 0.7f, m(rHa))
     drawCircle(back, stroke * 0.7f, m(lHa))
 }
