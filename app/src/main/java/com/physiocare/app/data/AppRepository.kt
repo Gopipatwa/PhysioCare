@@ -69,7 +69,12 @@ class AppRepository private constructor(context: Context) {
     var settings by mutableStateOf(Settings())
         private set
 
+    /** Answers from the "Paralysis & stroke recovery" questions (null = not set up). */
+    var recovery by mutableStateOf<RecoveryProfile?>(null)
+        private set
+
     init {
+        loadRecovery()
         loadSettings()
         loadPlan()
         loadOverrides()
@@ -104,6 +109,29 @@ class AppRepository private constructor(context: Context) {
             .apply()
     }
 
+    // ───────────── Recovery profile ─────────────
+    private fun loadRecovery() {
+        val c = prefs.getString("rec_condition", null) ?: return
+        recovery = try {
+            RecoveryProfile(
+                condition = Condition.valueOf(c),
+                side = prefs.getString("rec_side", null)?.let { Side.valueOf(it) },
+                ability = Ability.valueOf(prefs.getString("rec_ability", Ability.LITTLE.name) ?: Ability.LITTLE.name),
+            )
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    fun updateRecovery(p: RecoveryProfile?) {
+        recovery = p
+        prefs.edit()
+            .putString("rec_condition", p?.condition?.name)
+            .putString("rec_side", p?.side?.name)
+            .putString("rec_ability", p?.ability?.name)
+            .apply()
+    }
+
     // ───────────── My Plan ─────────────
     private fun loadPlan() {
         val raw = prefs.getString("plan", null)
@@ -119,6 +147,12 @@ class AppRepository private constructor(context: Context) {
 
     fun togglePlan(id: String) {
         if (id in plan) plan.remove(id) else plan.add(id)
+        savePlan()
+    }
+
+    fun setPlan(ids: List<String>) {
+        plan.clear()
+        plan.addAll(ids.distinct().filter { ExerciseLibrary.byId(it) != null })
         savePlan()
     }
 

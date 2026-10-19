@@ -1,6 +1,6 @@
 # PhysioCare – home physiotherapy for older adults (Android)
 
-A lightweight Android app with **71 physiotherapy exercises**, an animated guide for every one, a **camera that counts your repetitions**, a spoken voice coach, timed holds, rest timers, pain tracking and progress history – all stored on the phone, with no account and no internet needed.
+A lightweight Android app with **98 physiotherapy exercises**, a **paralysis & stroke recovery** section, an animated guide for every one, a **camera that counts your repetitions**, a spoken voice coach, timed holds, rest timers, pain tracking and progress history – all stored on the phone, with no account and no internet needed.
 
 The APK is built for you by **GitHub Actions** – you don't need Android Studio.
 
@@ -55,7 +55,8 @@ Keep `physiocare.jks` and the passwords somewhere safe. Never upload the `.jks` 
 
 | Area | What's included |
 |---|---|
-| **Exercise library** | 71 exercises in 10 body areas: Neck, Shoulders, Arms/Wrists/Hands, Back & Spine, Core & Posture, Hips, Knees, Ankles & Feet, Balance & Daily Strength, Breathing & Relaxation. Each has plain-language steps, tips, who it helps, difficulty and a safety note. Search by body part or problem (“knee”, “grip”, “balance”). |
+| **Exercise library** | 98 exercises in 12 areas: Neck, Shoulders, Arms/Wrists/Hands, Back & Spine, Core & Posture, Hips, Knees, Ankles & Feet, Balance & Daily Strength, Breathing & Relaxation, Stroke & Paralysis Recovery, Face (Bell's palsy). Each has plain-language steps, tips, who it helps, difficulty and a safety note. Search by body part or problem (“knee”, “grip”, “balance”). |
+| **Paralysis & stroke recovery** | Three questions – what happened (stroke, spinal cord injury legs / arms and legs, Bell's palsy, Guillain-Barré or nerve weakness), which side, and how much the person can move (not yet / a little / weak) – then the app shows only matching exercises, plus "when you get stronger" next steps and condition-specific safety advice. Includes carer-assisted exercises written for the helper, mirror therapy, pressure relief, huff cough and face exercises. Camera counting switches to "count small movements" for weak muscles. One tap makes it the daily plan. |
 | **Animated guide** | Every exercise has a moving demonstration figure (on a chair, standing or lying, from the side or the front), drawn in code – no images or videos, so the app stays small. |
 | **Camera counting** | 17 exercises (sit-to-stand, arm raises, squats, marching, knee straightening, bridges, heel raises and more) are counted automatically using on-device body tracking. A live skeleton shows what the camera sees, with the joint being measured highlighted, plus a progress bar and coaching (“Almost there – a little more”). A **+1** button fixes a missed count. Nothing is recorded or uploaded. |
 | **Tap counting** | Exercises the camera can't judge (hands, neck, ankles) use a huge “tap after each one” button – or turn on **Voice counts for me** for a slow “up… and down” rhythm that counts by itself. |
@@ -109,7 +110,8 @@ app/src/main/java/com/physiocare/app/
 ├── MainActivity.kt
 ├── data/
 │   ├── Models.kt            exercise, guide pose, camera rule, target
-│   ├── ExerciseLibrary.kt   all 71 exercises (edit here to add more)
+│   ├── ExerciseLibrary.kt   all 98 exercises (edit here to add more)
+│   ├── Recovery.kt          paralysis type + movement level → exercises, safety text
 │   └── AppRepository.kt     local storage + streak / stats / report
 ├── pose/
 │   ├── CameraPoseView.kt    CameraX + ML Kit + skeleton overlay
@@ -118,7 +120,7 @@ app/src/main/java/com/physiocare/app/
 │   ├── PhysioApp.kt         navigation, big bottom tabs, safety welcome
 │   ├── Theme.kt             colours and large type scale
 │   ├── components/          big buttons, steppers, animated figure
-│   └── screens/             Home, Library, Detail, Session, Progress, Settings
+│   └── screens/             Home, Library, Detail, Session, Recovery, Progress, Settings
 └── util/                    voice coach, daily reminder
 .github/workflows/build-apk.yml   builds the APK on every push
 ```

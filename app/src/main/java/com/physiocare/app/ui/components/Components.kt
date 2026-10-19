@@ -205,6 +205,14 @@ fun ExerciseRow(ex: Exercise, target: Target, onClick: () -> Unit, trailing: (@C
             Column(Modifier.weight(1f).padding(start = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(ex.name, style = MaterialTheme.typography.titleMedium)
                 Text(ex.summary(target), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (ex.helper) {
+                    Text(
+                        "👐 Done with a helper",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
                 if (ex.cameraCapable) {
                     Text(
                         "📷 Camera counts for you",

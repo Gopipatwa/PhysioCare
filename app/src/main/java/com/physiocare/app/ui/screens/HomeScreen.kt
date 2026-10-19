@@ -40,6 +40,7 @@ fun HomeScreen(
     onStartPlan: (List<String>) -> Unit,
     onOpen: (String) -> Unit,
     onBrowse: () -> Unit,
+    onRecovery: () -> Unit,
 ) {
     val s = repo.settings
     val greet = when (LocalTime.now().hour) {
@@ -95,6 +96,7 @@ fun HomeScreen(
                 StatTile("🔥", "$streak", "day streak", Modifier.weight(1f))
             }
         }
+        item { RecoveryEntryCard(repo, onRecovery) }
         item {
             if (plan.isNotEmpty()) {
                 BigButton(

@@ -12,8 +12,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
+import com.physiocare.app.data.FacePose
 import com.physiocare.app.data.FigurePose
 import com.physiocare.app.data.Guide
 import com.physiocare.app.data.Posture
@@ -50,6 +54,12 @@ fun ExerciseFigure(guide: Guide, modifier: Modifier = Modifier, animate: Boolean
     val accent = MaterialTheme.colorScheme.secondary
     Canvas(modifier) {
         val k = if (animate) t.value else 1f
+        if (guide.posture == Posture.FACE) {
+            val fa = guide.faceA ?: FacePose()
+            val fb = guide.faceB ?: fa
+            drawFace(fa.lerp(fb, k), main, accent, prop)
+            return@Canvas
+        }
         drawFigure(guide.a.lerp(guide.b, k), guide.posture, guide.front, main, dim, prop, accent)
     }
 }
@@ -175,4 +185,75 @@ private fun DrawScope.drawFigure(
     limb(main, listOf(rSh, rEl, rHa))
     drawCircle(main, stroke * 0.7f, m(rHa))
     drawCircle(back, stroke * 0.7f, m(lHa))
+}
+
+/** Simple front-facing face for Bell's palsy exercises. */
+private fun DrawScope.drawFace(f: FacePose, main: Color, accent: Color, prop: Color) {
+    val r = min(size.width, size.height) * 0.42f
+    val c = Offset(size.width / 2f, size.height / 2f)
+    val line = r * 0.07f
+    val skin = main.copy(alpha = 0.12f)
+
+    // cheeks puff out beyond the face outline
+    val puffR = r * 0.30f * f.puff
+    if (f.puff > 0.02f) {
+        drawCircle(skin, puffR + r * 0.05f, c + Offset(-r * 0.62f, r * 0.30f))
+        drawCircle(skin, puffR + r * 0.05f, c + Offset(r * 0.62f, r * 0.30f))
+    }
+    drawOval(skin, topLeft = Offset(c.x - r * 0.82f, c.y - r), size = Size(r * 1.64f, r * 2f))
+    drawOval(main, topLeft = Offset(c.x - r * 0.82f, c.y - r), size = Size(r * 1.64f, r * 2f), style = Stroke(line))
+
+    // eyebrows
+    val browY = c.y - r * 0.42f - f.brow * r * 0.16f
+    for (sx in listOf(-1f, 1f)) {
+        drawLine(main, Offset(c.x + sx * r * 0.18f, browY), Offset(c.x + sx * r * 0.52f, browY - r * 0.04f), line, StrokeCap.Round)
+        if (f.brow > 0.5f) {
+            // forehead lines when raising the brows
+            drawLine(prop, Offset(c.x - r * 0.3f, browY - r * 0.16f), Offset(c.x + r * 0.3f, browY - r * 0.16f), line * 0.6f, StrokeCap.Round)
+        }
+    }
+
+    // eyes: an oval that closes to a line
+    val eyeY = c.y - r * 0.22f
+    val eyeH = r * 0.17f * (1f - f.eyeClose).coerceIn(0f, 1f)
+    for (sx in listOf(-1f, 1f)) {
+        val ex = c.x + sx * r * 0.35f
+        if (eyeH > r * 0.03f) {
+            drawOval(Color.White, topLeft = Offset(ex - r * 0.15f, eyeY - eyeH / 2f), size = Size(r * 0.3f, eyeH))
+            drawOval(main, topLeft = Offset(ex - r * 0.15f, eyeY - eyeH / 2f), size = Size(r * 0.3f, eyeH), style = Stroke(line * 0.7f))
+            drawCircle(main, min(r * 0.06f, eyeH / 2f), Offset(ex, eyeY))
+        } else {
+            drawLine(main, Offset(ex - r * 0.15f, eyeY), Offset(ex + r * 0.15f, eyeY), line, StrokeCap.Round)
+        }
+    }
+
+    // nose, with wrinkles
+    val noseTop = c.y - r * 0.12f
+    drawLine(main, Offset(c.x, noseTop), Offset(c.x - r * 0.06f, c.y + r * 0.18f), line * 0.8f, StrokeCap.Round)
+    drawLine(main, Offset(c.x - r * 0.06f, c.y + r * 0.18f), Offset(c.x + r * 0.08f, c.y + r * 0.18f), line * 0.8f, StrokeCap.Round)
+    if (f.nose > 0.1f) {
+        for (i in 0..1) {
+            val y = noseTop + r * (0.02f + i * 0.07f)
+            drawLine(prop, Offset(c.x - r * 0.12f * f.nose, y), Offset(c.x + r * 0.12f * f.nose, y), line * 0.5f, StrokeCap.Round)
+        }
+    }
+
+    // mouth
+    val mouthY = c.y + r * 0.48f
+    val half = r * 0.32f * (1f - 0.65f * f.pucker) * (1f + 0.15f * f.smile)
+    if (f.pucker > 0.5f) {
+        val w = r * 0.18f
+        drawOval(accent, topLeft = Offset(c.x - w / 2f, mouthY - w * 0.45f), size = Size(w, w * 0.9f))
+        drawOval(main, topLeft = Offset(c.x - w / 2f, mouthY - w * 0.45f), size = Size(w, w * 0.9f), style = Stroke(line * 0.8f))
+    } else if (f.mouthOpen > 0.05f) {
+        val h = r * 0.3f * f.mouthOpen
+        drawOval(main.copy(alpha = 0.8f), topLeft = Offset(c.x - half * 0.8f, mouthY - h / 2f), size = Size(half * 1.6f, h))
+    } else {
+        val corner = mouthY - f.smile * r * 0.12f
+        val path = Path().apply {
+            moveTo(c.x - half, corner)
+            quadraticBezierTo(c.x, mouthY + f.smile * r * 0.16f + (if (f.puff > 0.2f) -r * 0.02f else 0f), c.x + half, corner)
+        }
+        drawPath(path, main, style = Stroke(line, cap = StrokeCap.Round))
+    }
 }

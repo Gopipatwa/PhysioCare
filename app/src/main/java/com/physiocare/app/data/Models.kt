@@ -12,6 +12,8 @@ enum class Category(val title: String, val emoji: String, val blurb: String) {
     FEET("Ankles & Feet", "🦶", "Swelling, sprains, circulation"),
     BALANCE("Balance & Daily Strength", "⚖️", "Fall prevention, walking, standing up"),
     BREATHING("Breathing & Relaxation", "🌬️", "Lungs, calm, recovery"),
+    RECOVERY("Stroke & Paralysis Recovery", "🧠", "Helped and small-movement exercises"),
+    FACE("Face (Bell's palsy)", "🙂", "Gentle face exercises in front of a mirror"),
 }
 
 enum class Level(val label: String) { EASY("Easy"), MEDIUM("Medium"), HARD("Harder") }
@@ -50,7 +52,7 @@ data class AngleRule(
     val hint: String,
 )
 
-enum class Posture { STAND, SIT, LIE }
+enum class Posture { STAND, SIT, LIE, FACE }
 
 /**
  * Joint angles (degrees) for the animated guide figure.
@@ -83,8 +85,34 @@ data class FigurePose(
     }
 }
 
+/** Face expression for Bell's palsy exercises. Each value 0 (relaxed) .. 1 (full). */
+data class FacePose(
+    val brow: Float = 0f,
+    val eyeClose: Float = 0f,
+    val smile: Float = 0f,
+    val pucker: Float = 0f,
+    val puff: Float = 0f,
+    val nose: Float = 0f,
+    val mouthOpen: Float = 0f,
+) {
+    fun lerp(o: FacePose, t: Float): FacePose {
+        fun m(a: Float, b: Float) = a + (b - a) * t
+        return FacePose(
+            m(brow, o.brow), m(eyeClose, o.eyeClose), m(smile, o.smile), m(pucker, o.pucker),
+            m(puff, o.puff), m(nose, o.nose), m(mouthOpen, o.mouthOpen),
+        )
+    }
+}
+
 /** Two key poses the guide animation moves between. front = viewed from the front. */
-data class Guide(val posture: Posture, val front: Boolean, val a: FigurePose, val b: FigurePose = a)
+data class Guide(
+    val posture: Posture,
+    val front: Boolean,
+    val a: FigurePose,
+    val b: FigurePose = a,
+    val faceA: FacePose? = null,
+    val faceB: FacePose? = null,
+)
 
 data class Target(val reps: Int, val sets: Int, val holdSec: Int)
 
@@ -106,6 +134,8 @@ data class Exercise(
     val guide: Guide,
     /** Seconds per breath for breathing exercises (0 = not a breathing exercise). */
     val breathCycle: Int,
+    /** True when a carer moves the body part; the steps are written for the helper. */
+    val helper: Boolean = false,
 ) {
     val defaultTarget: Target get() = Target(reps, sets, holdSec)
     val cameraCapable: Boolean get() = rule != null
@@ -117,3 +147,31 @@ fun Exercise.summary(t: Target): String {
     return if (mode == Mode.HOLD) "Hold ${t.holdSec}s × ${t.reps}, $sets$side"
     else "${t.reps} reps × $sets$side"
 }
+
+// ───────────── Paralysis & stroke recovery ─────────────
+
+enum class Condition(
+    val title: String,
+    val emoji: String,
+    val blurb: String,
+    /** Used in the question "How much can you move …?" */
+    val bodyPart: String,
+    /** Whether one side is affected (then we ask which side). */
+    val oneSided: Boolean,
+) {
+    STROKE("Stroke", "🧠", "One side of the body is weak or numb – arm, leg or face", "your weaker arm and leg", true),
+    SCI_LEGS("Spinal cord injury – legs", "🦽", "Legs are paralysed but arms work (paraplegia)", "your legs", false),
+    SCI_ALL("Spinal cord injury – arms and legs", "🧑‍🦽", "Arms, hands and legs are affected (tetraplegia)", "your arms and hands", false),
+    BELLS("Bell's palsy", "🙂", "One side of the face droops or won't move", "the weak side of your face", true),
+    NERVE("Guillain-Barré or nerve weakness", "⚡", "Arms and legs weakened by a nerve illness, slowly recovering", "your arms and legs", false),
+}
+
+enum class Ability(val title: String, val blurb: String) {
+    NONE("Not yet – someone helps me", "No movement yet, or only a flicker. A carer or family member moves it for me."),
+    LITTLE("A little", "Small or slow movements, or only with help from my stronger hand."),
+    WEAK("Yes, but it's weak", "I can do the movement myself, but it tires quickly or isn't steady."),
+}
+
+enum class Side(val label: String) { LEFT("Left"), RIGHT("Right") }
+
+data class RecoveryProfile(val condition: Condition, val side: Side?, val ability: Ability)

@@ -46,8 +46,10 @@ object PoseMath {
  * Counts a repetition when the joint angle travels from `start` past `target`
  * and back past `start`. Smoothed to ignore camera jitter.
  */
-class RepCounter(private val rule: AngleRule) {
-    private val increasing = rule.target > rule.start
+class RepCounter(private val rule: AngleRule, reach: Float = 1f) {
+    /** reach < 1 = "small movements" mode: the target is moved closer to the start position. */
+    private val target = rule.start + (rule.target - rule.start) * reach.coerceIn(0.2f, 1f)
+    private val increasing = target > rule.start
     private val reachedSide = BooleanArray(2)
     private val smooth = FloatArray(2) { Float.NaN }
 
@@ -71,7 +73,7 @@ class RepCounter(private val rule: AngleRule) {
             if (raw == null) return@forEachIndexed
             val s = if (smooth[i].isNaN()) raw else smooth[i] * 0.55f + raw * 0.45f
             smooth[i] = s
-            val pastTarget = if (increasing) s >= rule.target else s <= rule.target
+            val pastTarget = if (increasing) s >= target else s <= target
             val backAtStart = if (increasing) s <= rule.start else s >= rule.start
             if (pastTarget) {
                 reachedSide[i] = true
@@ -80,7 +82,7 @@ class RepCounter(private val rule: AngleRule) {
                 count++
                 counted = true
             }
-            val p = ((s - rule.start) / (rule.target - rule.start)).coerceIn(0f, 1f)
+            val p = ((s - rule.start) / (target - rule.start)).coerceIn(0f, 1f)
             if (p > best) best = p
         }
         progress = best

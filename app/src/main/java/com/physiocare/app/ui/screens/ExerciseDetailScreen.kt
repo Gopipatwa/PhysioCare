@@ -83,6 +83,7 @@ fun ExerciseDetailScreen(
             }
 
             Text("Helps with: ${ex.goodFor}", style = MaterialTheme.typography.bodyLarge)
+            if (ex.helper) HelperNote()
 
             BigButton("Start exercise", onClick = { onStart(id) }, icon = Icons.Filled.PlayArrow, minHeight = 76.dp)
             BigOutlinedButton(

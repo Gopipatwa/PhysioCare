@@ -25,6 +25,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      # GitHub's Ubuntu runners already include the Android SDK, so no setup action is needed.
       - name: Check Android SDK
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"

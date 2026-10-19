@@ -41,7 +41,12 @@ import com.physiocare.app.ui.components.ExerciseRow
 import com.physiocare.app.ui.components.ScreenHeader
 
 @Composable
-fun LibraryScreen(repo: AppRepository, onCategory: (Category) -> Unit, onOpen: (String) -> Unit) {
+fun LibraryScreen(
+    repo: AppRepository,
+    onCategory: (Category) -> Unit,
+    onOpen: (String) -> Unit,
+    onRecovery: () -> Unit,
+) {
     var query by rememberSaveable { mutableStateOf("") }
     val results = ExerciseLibrary.search(query)
 
@@ -92,6 +97,7 @@ fun LibraryScreen(repo: AppRepository, onCategory: (Category) -> Unit, onOpen: (
                 ExerciseRow(ex, repo.targetFor(ex), onClick = { onOpen(ex.id) })
             }
         } else {
+            item(span = { GridItemSpan(maxLineSpan) }) { RecoveryEntryCard(repo, onRecovery) }
             items(Category.values().toList(), key = { it.name }) { c ->
                 Card(
                     onClick = { onCategory(c) },

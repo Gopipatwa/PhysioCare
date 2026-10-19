@@ -68,6 +68,7 @@ import com.physiocare.app.data.AppRepository
 import com.physiocare.app.data.Exercise
 import com.physiocare.app.data.ExerciseLibrary
 import com.physiocare.app.data.Mode
+import com.physiocare.app.data.Recovery
 import com.physiocare.app.data.SessionRecord
 import com.physiocare.app.pose.CameraPoseView
 import com.physiocare.app.pose.PoseMath
@@ -129,6 +130,7 @@ private fun ExerciseRunner(
     var useCamera by remember { mutableStateOf(ex.mode == Mode.CAMERA && ex.rule != null) }
     var frontCamera by remember { mutableStateOf(repo.settings.frontCamera) }
     var autoTempo by remember { mutableStateOf(false) }
+    var smallMoves by remember { mutableStateOf(Recovery.smallMoves(repo.recovery)) }
     var countdown by remember { mutableIntStateOf(3) }
     var restLeft by remember { mutableIntStateOf(0) }
     var holdLeft by remember { mutableIntStateOf(target.holdSec) }
@@ -150,7 +152,9 @@ private fun ExerciseRunner(
         useCamera && ex.rule != null -> Mode.CAMERA
         else -> Mode.MANUAL
     }
-    val counter = remember(setIndex, mode) { if (mode == Mode.CAMERA) ex.rule?.let { RepCounter(it) } else null }
+    val counter = remember(setIndex, mode, smallMoves) {
+        if (mode == Mode.CAMERA) ex.rule?.let { RepCounter(it, if (smallMoves) 0.45f else 1f) } else null
+    }
     val highlight = remember(ex.id) { ex.rule?.let { PoseMath.ruleLandmarks(it) } ?: emptySet() }
 
     DisposableEffect(Unit) {
@@ -426,6 +430,7 @@ private fun ExerciseRunner(
                     Phase.READY -> {
                         Text(ex.rule?.hint ?: "", style = MaterialTheme.typography.bodyLarge)
                         BigButton("Start", onClick = { begin() }, icon = Icons.Filled.PlayArrow, minHeight = 76.dp)
+                        SmallMovesToggle(smallMoves) { smallMoves = it }
                         CameraToggle(useCamera) { useCamera = it }
                     }
                     Phase.ACTIVE -> {
@@ -460,6 +465,8 @@ private fun ExerciseRunner(
                         useCamera = useCamera,
                         hasCamPermission = hasCamPermission,
                         autoTempo = autoTempo,
+                        smallMoves = smallMoves,
+                        onSmallMoves = { smallMoves = it },
                         onCamera = { useCamera = it },
                         onTempo = { autoTempo = it },
                         onStart = {
@@ -566,6 +573,34 @@ private fun FigureCard(ex: Exercise) {
 }
 
 @Composable
+private fun SmallMovesToggle(on: Boolean, onChange: (Boolean) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text("Count small movements", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "For weak or recovering muscles: a smaller movement still counts.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = on, onCheckedChange = onChange)
+    }
+}
+
+@Composable
+fun HelperNote() {
+    Text(
+        "👐 This exercise is done with a helper. The steps are written for the person helping.",
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .padding(14.dp),
+    )
+}
+
+@Composable
 private fun CameraToggle(on: Boolean, onChange: (Boolean) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
@@ -588,14 +623,18 @@ private fun ReadyContent(
     useCamera: Boolean,
     hasCamPermission: Boolean,
     autoTempo: Boolean,
+    smallMoves: Boolean,
+    onSmallMoves: (Boolean) -> Unit,
     onCamera: (Boolean) -> Unit,
     onTempo: (Boolean) -> Unit,
     onStart: () -> Unit,
 ) {
     FigureCard(ex)
+    if (ex.helper) HelperNote()
     ex.steps.forEachIndexed { i, s -> Text("${i + 1}.  $s", style = MaterialTheme.typography.bodyLarge) }
     if (ex.rule != null) {
         CameraToggle(useCamera, onCamera)
+        if (useCamera) SmallMovesToggle(smallMoves, onSmallMoves)
         if (useCamera && !hasCamPermission) {
             Text(
                 "When you press Start, Android will ask to use the camera. Choose “Allow”.",

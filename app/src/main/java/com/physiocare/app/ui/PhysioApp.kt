@@ -52,6 +52,7 @@ import com.physiocare.app.ui.screens.ExerciseDetailScreen
 import com.physiocare.app.ui.screens.HomeScreen
 import com.physiocare.app.ui.screens.LibraryScreen
 import com.physiocare.app.ui.screens.ProgressScreen
+import com.physiocare.app.ui.screens.RecoveryScreen
 import com.physiocare.app.ui.screens.SessionScreen
 import com.physiocare.app.ui.screens.SettingsScreen
 import com.physiocare.app.util.Speaker
@@ -91,6 +92,7 @@ fun PhysioApp(repo: AppRepository, speaker: Speaker) {
                             onStartPlan = { ids -> nav.navigate("session/${ids.joinToString(",")}") },
                             onOpen = { nav.navigate("exercise/$it") },
                             onBrowse = { nav.switchTab("library") },
+                            onRecovery = { nav.navigate("recovery") },
                         )
                     }
                     composable("library") {
@@ -98,6 +100,7 @@ fun PhysioApp(repo: AppRepository, speaker: Speaker) {
                             repo = repo,
                             onCategory = { nav.navigate("category/${it.name}") },
                             onOpen = { nav.navigate("exercise/$it") },
+                            onRecovery = { nav.navigate("recovery") },
                         )
                     }
                     composable("category/{name}") { back ->
@@ -118,6 +121,14 @@ fun PhysioApp(repo: AppRepository, speaker: Speaker) {
                     composable("session/{ids}") { back ->
                         val ids = (back.arguments?.getString("ids") ?: "").split(",").filter { it.isNotBlank() }
                         SessionScreen(ids, repo, speaker, onExit = { nav.popBackStack() })
+                    }
+                    composable("recovery") {
+                        RecoveryScreen(
+                            repo = repo,
+                            onBack = { nav.popBackStack() },
+                            onOpen = { nav.navigate("exercise/$it") },
+                            onStart = { ids -> if (ids.isNotEmpty()) nav.navigate("session/${ids.joinToString(",")}") },
+                        )
                     }
                     composable("progress") { ProgressScreen(repo) }
                     composable("settings") { SettingsScreen(repo, speaker) }
@@ -161,7 +172,7 @@ private fun NavHostController.switchTab(route: String) {
 @Composable
 private fun BottomTabs(route: String, nav: NavHostController) {
     val current = when {
-        route.startsWith("category") || route.startsWith("exercise") -> "library"
+        route.startsWith("category") || route.startsWith("exercise") || route.startsWith("recovery") -> "library"
         else -> route
     }
     Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface)) {

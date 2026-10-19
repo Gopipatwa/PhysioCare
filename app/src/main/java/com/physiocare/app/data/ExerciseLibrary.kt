@@ -5,10 +5,12 @@ import com.physiocare.app.data.Category.BACK
 import com.physiocare.app.data.Category.BALANCE
 import com.physiocare.app.data.Category.BREATHING
 import com.physiocare.app.data.Category.CORE
+import com.physiocare.app.data.Category.FACE
 import com.physiocare.app.data.Category.FEET
 import com.physiocare.app.data.Category.HIPS
 import com.physiocare.app.data.Category.KNEES
 import com.physiocare.app.data.Category.NECK
+import com.physiocare.app.data.Category.RECOVERY
 import com.physiocare.app.data.Category.SHOULDERS
 import com.physiocare.app.data.Joint.ANKLE
 import com.physiocare.app.data.Joint.ELBOW
@@ -35,6 +37,7 @@ private val SIDE_LYING = FigurePose(trunk = -90f)
 
 private fun side(p: Posture, a: FigurePose, b: FigurePose = a) = Guide(p, false, a, b)
 private fun front(p: Posture, a: FigurePose, b: FigurePose = a) = Guide(p, true, a, b)
+private fun face(a: FacePose, b: FacePose = a) = Guide(Posture.FACE, true, STANDING, STANDING, a, b)
 
 private fun ex(
     id: String,
@@ -53,12 +56,13 @@ private fun ex(
     rule: AngleRule? = null,
     guide: Guide,
     breath: Int = 0,
+    helper: Boolean = false,
 ) = Exercise(
     id = id, name = name, category = cat, level = level, goodFor = goodFor,
     steps = steps, tips = tips,
     mode = if (rule != null && mode == Mode.MANUAL) Mode.CAMERA else mode,
     reps = reps, sets = sets, holdSec = hold, restSec = rest,
-    perSide = perSide, rule = rule, guide = guide, breathCycle = breath,
+    perSide = perSide, rule = rule, guide = guide, breathCycle = breath, helper = helper,
 )
 
 private const val SIDE_ON = "Stand side-on to the phone, about 2–3 metres away, so your whole body is visible."
@@ -1004,6 +1008,351 @@ object ExerciseLibrary {
             mode = Mode.HOLD, reps = 2, sets = 1, hold = 60, rest = 10,
             guide = side(Posture.SIT, SITTING, SITTING.copy(shrug = 5f, rElbow = 30f)),
             breath = 8,
+        ),
+
+        // ───────────────────────── STROKE & PARALYSIS RECOVERY ─────────────────────────
+        // Helper (carer) exercises: steps are written for the person helping.
+        ex(
+            "rec_pa_arm_raise", "Helped Arm Raise", RECOVERY, Level.EASY,
+            "Keeping a paralysed shoulder moving and pain-free",
+            listOf(
+                "The person lies on their back. Stand beside the weak arm.",
+                "Hold the arm under the elbow with one hand and at the wrist with the other.",
+                "Slowly lift the straight arm forward and up to shoulder height.",
+                "Lower it slowly back to the bed.",
+            ),
+            listOf(
+                "Never pull on the hand or lift under the armpit.",
+                "Stop at shoulder height unless the physiotherapist says to go higher.",
+            ),
+            reps = 10, sets = 1, helper = true,
+            guide = side(Posture.LIE, SUPINE, SUPINE.copy(rArm = 90f)),
+        ),
+        ex(
+            "rec_pa_elbow", "Helped Elbow Bend", RECOVERY, Level.EASY,
+            "Preventing a stiff, bent elbow",
+            listOf(
+                "The person lies or sits with the weak arm supported.",
+                "Hold the upper arm still with one hand and the wrist with the other.",
+                "Slowly bend the elbow, bringing the hand towards the shoulder.",
+                "Straighten it fully again. Then turn the palm up and down a few times.",
+            ),
+            reps = 10, sets = 1, helper = true,
+            guide = side(Posture.LIE, SUPINE, SUPINE.copy(rElbow = 130f)),
+        ),
+        ex(
+            "rec_pa_wrist", "Helped Wrist and Finger Stretch", RECOVERY, Level.EASY,
+            "Stopping the hand from curling into a tight fist",
+            listOf(
+                "Support the forearm on a table or pillow.",
+                "Gently straighten the fingers and thumb with your hand.",
+                "Keeping the fingers straight, slowly bend the wrist back until you feel a gentle stretch.",
+                "Hold, then relax.",
+            ),
+            listOf("Move slowly. If the hand is very tight, hold for longer rather than pushing harder."),
+            mode = Mode.HOLD, reps = 3, sets = 1, hold = 20, helper = true,
+            guide = side(Posture.SIT, HANDS_FORWARD, HANDS_FORWARD.copy(rElbow = 70f)),
+        ),
+        ex(
+            "rec_pa_knee", "Helped Knee Bend", RECOVERY, Level.EASY,
+            "Keeping a paralysed leg flexible, circulation",
+            listOf(
+                "The person lies on their back with legs straight.",
+                "Hold under the knee with one hand and under the heel with the other.",
+                "Slowly bend the knee and hip, sliding the heel towards the bottom.",
+                "Slowly straighten the leg again.",
+            ),
+            reps = 10, sets = 1, perSide = true, helper = true,
+            guide = side(Posture.LIE, SUPINE, SUPINE.copy(rHip = 60f, rKnee = 110f)),
+        ),
+        ex(
+            "rec_pa_ankle", "Helped Ankle Stretch", RECOVERY, Level.EASY,
+            "Preventing a dropped, stiff ankle",
+            listOf(
+                "The person lies on their back with the leg straight.",
+                "Cup the heel in your hand and rest your forearm along the sole of the foot.",
+                "Lean gently so the toes move towards the knee.",
+                "Hold the stretch, then relax.",
+            ),
+            mode = Mode.HOLD, reps = 3, sets = 1, hold = 20, perSide = true, helper = true,
+            guide = side(Posture.LIE, SUPINE.copy(rAnkle = 15f), SUPINE.copy(rAnkle = -20f)),
+        ),
+        ex(
+            "rec_pa_hip_out", "Helped Leg Out to the Side", RECOVERY, Level.EASY,
+            "Hip movement, easier washing and dressing",
+            listOf(
+                "The person lies on their back with legs straight.",
+                "Support the leg under the knee and the heel.",
+                "Slide the leg out to the side, keeping the toes pointing up.",
+                "Bring it slowly back to the middle.",
+            ),
+            reps = 10, sets = 1, perSide = true, helper = true,
+            guide = front(Posture.LIE, SIDE_LYING, SIDE_LYING.copy(rHip = 25f)),
+        ),
+        ex(
+            "rec_ham_helper", "Helped Back-of-Leg Stretch", RECOVERY, Level.EASY,
+            "Tight hamstrings in paralysed legs, comfortable sitting",
+            listOf(
+                "The person lies on their back with both legs straight.",
+                "Hold the heel with one hand and keep the knee straight with the other.",
+                "Lift the straight leg slowly until you feel resistance.",
+                "Hold, then lower slowly.",
+            ),
+            listOf("Paralysed legs can't feel overstretching – stop at the first resistance."),
+            mode = Mode.HOLD, reps = 3, sets = 1, hold = 30, perSide = true, helper = true,
+            guide = side(Posture.LIE, SUPINE, SUPINE.copy(rHip = 60f)),
+        ),
+        ex(
+            "rec_rolling", "Rolling onto Your Side", RECOVERY, Level.EASY,
+            "Moving in bed, relieving pressure, getting up",
+            listOf(
+                "Lie on your back and bend your knees if you can (a helper can bend them).",
+                "Turn your head and reach your arm across your body towards the side you are rolling to.",
+                "Let your knees fall the same way and roll onto your side.",
+                "Roll back. A helper can guide from the shoulder and hip.",
+            ),
+            reps = 5, sets = 1, perSide = true,
+            guide = side(Posture.LIE, HOOK, HOOK.copy(lHip = 30f, rHip = 30f, rArm = 120f, head = 15f)),
+        ),
+        // Small movements with self-help
+        ex(
+            "rec_clasp_raise", "Clasped-Hands Arm Raise", RECOVERY, Level.EASY,
+            "Using the stronger arm to move the weaker one",
+            listOf(
+                "Sit or lie down and clasp your hands together, fingers interlocked.",
+                "Use your stronger arm to lift both arms forward and up.",
+                "Go only as high as is comfortable for the weaker shoulder.",
+                "Lower slowly.",
+            ),
+            reps = 10, sets = 2,
+            rule = AngleRule(HIP, SHOULDER, ELBOW, start = 35f, target = 100f, side = SideMode.AVG,
+                hint = "Sit side-on to the phone so your upper body and arms are visible."),
+            guide = side(
+                Posture.SIT,
+                SITTING.copy(lArm = 10f, rArm = 10f, lElbow = 60f, rElbow = 60f),
+                SITTING.copy(lArm = 115f, rArm = 115f, lElbow = 10f, rElbow = 10f),
+            ),
+        ),
+        ex(
+            "rec_table_slide", "Towel Slide on a Table", RECOVERY, Level.EASY,
+            "Shoulder and elbow movement for a weak arm",
+            listOf(
+                "Sit at a table with a small towel under the weak hand.",
+                "Put your stronger hand on top if you need help.",
+                "Slide the towel forward, straightening your elbow.",
+                "Slide it back towards you. You can also make circles.",
+            ),
+            reps = 10, sets = 2,
+            guide = side(Posture.SIT, SITTING.copy(rArm = 30f, rElbow = 60f), SITTING.copy(rArm = 75f, rElbow = 10f)),
+        ),
+        ex(
+            "rec_finger_lift", "Finger Lifts", RECOVERY, Level.EASY,
+            "Getting finger movement back",
+            listOf(
+                "Rest your weak hand flat on a table.",
+                "Lift one finger at a time, then put it down.",
+                "Lifting all five fingers in turn counts as one.",
+                "If you can't lift them yet, just try to press each one down.",
+            ),
+            reps = 5, sets = 2,
+            guide = side(Posture.SIT, HANDS_FORWARD, HANDS_FORWARD.copy(rElbow = 88f)),
+        ),
+        ex(
+            "rec_mirror", "Mirror Therapy", RECOVERY, Level.EASY,
+            "Waking up movement in a weak hand after stroke",
+            listOf(
+                "Sit at a table with a mirror standing upright in the middle, facing your stronger hand.",
+                "Put the weak hand behind the mirror so you can't see it.",
+                "Watch the reflection while you slowly open, close and turn your stronger hand.",
+                "Imagine the reflection is your weak hand, and try to move both together.",
+            ),
+            listOf("Any mirror works, even a bathroom mirror laid on its side."),
+            mode = Mode.HOLD, reps = 3, sets = 1, hold = 60, rest = 15,
+            guide = front(
+                Posture.SIT,
+                F_SITTING.copy(lArm = 15f, rArm = 15f, lElbow = -100f, rElbow = -100f),
+                F_SITTING.copy(lArm = 15f, rArm = 15f, lElbow = -100f, rElbow = -70f),
+            ),
+        ),
+        ex(
+            "rec_weight_shift", "Seated Side-to-Side Lean", RECOVERY, Level.EASY,
+            "Sitting balance and trunk control",
+            listOf(
+                "Sit on a firm bed edge or chair, feet flat, hands resting on your thighs.",
+                "Lean slowly to put your weight onto one side, then come back to the middle.",
+                "Lean to the other side. Spend extra time leaning onto your weaker side.",
+            ),
+            listOf("Have someone stand beside you until your balance is steady."),
+            reps = 10, sets = 2,
+            guide = front(Posture.SIT, F_SITTING, F_SITTING.copy(trunk = -12f, lHip = 20f, rHip = -4f)),
+        ),
+        ex(
+            "rec_forward_reach", "Seated Forward Reach", RECOVERY, Level.EASY,
+            "Sitting balance, reaching from a chair or wheelchair",
+            listOf(
+                "Sit upright with your feet flat (brakes on if in a wheelchair).",
+                "Reach both hands forward towards a target, leaning from your hips.",
+                "Sit back up tall. Reach a little further as your balance improves.",
+            ),
+            reps = 10, sets = 2,
+            guide = side(
+                Posture.SIT, SITTING.copy(lArm = 30f, rArm = 30f),
+                SITTING.copy(trunk = 25f, lHip = 115f, rHip = 115f, lArm = 100f, rArm = 100f),
+            ),
+        ),
+        ex(
+            "rec_supported_stand", "Supported Standing", RECOVERY, Level.MEDIUM,
+            "Leg strength and confidence to stand",
+            listOf(
+                "Stand at a kitchen counter or frame, with a helper beside your weaker side.",
+                "Hold on with both hands and stand as tall as you can.",
+                "Try to keep weight on both feet evenly. Hold, then sit down slowly.",
+            ),
+            listOf("Have a chair right behind you."),
+            mode = Mode.HOLD, reps = 3, sets = 1, hold = 30, helper = true,
+            guide = side(Posture.STAND, STANDING.copy(lArm = 60f, rArm = 60f, lElbow = 20f, rElbow = 20f)),
+        ),
+        ex(
+            "rec_weight_shift_stand", "Standing Weight Shift", RECOVERY, Level.MEDIUM,
+            "Trusting the weaker leg, walking",
+            listOf(
+                "Stand at a counter holding on with both hands.",
+                "Slowly shift your weight onto the weaker leg.",
+                "Then shift back to the middle. Keep both feet on the floor.",
+            ),
+            reps = 10, sets = 2,
+            guide = front(Posture.STAND, F_STANDING, F_STANDING.copy(trunk = -6f, lHip = 11f, rHip = -1f)),
+        ),
+        ex(
+            "rec_step_weak", "Stepping with the Weaker Leg", RECOVERY, Level.MEDIUM,
+            "Walking pattern after stroke",
+            listOf(
+                "Stand at a counter holding on, with a helper nearby.",
+                "Step the weaker foot forward and put your weight on it.",
+                "Step it back to the start. Then step it backwards and return.",
+            ),
+            reps = 10, sets = 2,
+            guide = side(Posture.STAND, STANDING, STANDING.copy(rHip = 25f, rKnee = 15f)),
+        ),
+        ex(
+            "sci_pressure_relief", "Pressure Relief", RECOVERY, Level.EASY,
+            "Preventing pressure sores when sitting a lot",
+            listOf(
+                "In your wheelchair, put the brakes on.",
+                "Push down on the armrests to lift your bottom off the seat – or, if you can't, lean far forward with your chest towards your knees, or lean to each side.",
+                "Hold the position for the full time, then sit back slowly.",
+                "Repeat every 15–30 minutes through the day, as your therapist advises.",
+            ),
+            listOf("A helper can tilt the chair back or help you lean if you can't do it alone."),
+            mode = Mode.HOLD, reps = 1, sets = 1, hold = 60,
+            guide = side(Posture.SIT, SITTING, SITTING.copy(trunk = 35f, lHip = 125f, rHip = 125f, lArm = 40f, rArm = 40f)),
+        ),
+        ex(
+            "sci_huff", "Huff Cough", RECOVERY, Level.EASY,
+            "Clearing the chest when coughing is weak",
+            listOf(
+                "Sit as upright as you can.",
+                "Take a slow, deep breath in.",
+                "Huff the air out with your mouth open, as if fogging up a mirror.",
+                "Do this twice, then try one strong cough.",
+            ),
+            listOf("A helper may press gently on the belly as you huff – only if your therapist has shown them how."),
+            reps = 3, sets = 2,
+            guide = side(Posture.SIT, SITTING, SITTING.copy(trunk = 8f, lHip = 98f, rHip = 98f, head = 10f)),
+        ),
+
+        // ───────────────────────── FACE (BELL'S PALSY) ─────────────────────────
+        ex(
+            "face_brow", "Raise Your Eyebrows", FACE, Level.EASY,
+            "Forehead movement with Bell's palsy",
+            listOf(
+                "Sit in front of a mirror.",
+                "Gently raise both eyebrows, as if surprised.",
+                "Hold for a moment, then relax. Help the weak side up with a fingertip if needed.",
+            ),
+            listOf("Small and gentle is best. Watch that both sides move the same amount."),
+            reps = 10, sets = 1,
+            guide = face(FacePose(), FacePose(brow = 1f)),
+        ),
+        ex(
+            "face_eyes", "Gently Close Your Eyes", FACE, Level.EASY,
+            "Eye closing and protecting the eye",
+            listOf(
+                "Look down, then slowly close your eyes without squeezing.",
+                "Hold gently for a moment.",
+                "Open your eyes slowly.",
+            ),
+            listOf("If the eye won't close fully, gently guide the eyelid down with a clean fingertip."),
+            reps = 10, sets = 1,
+            guide = face(FacePose(), FacePose(eyeClose = 1f)),
+        ),
+        ex(
+            "face_smile", "Small Smile", FACE, Level.EASY,
+            "Mouth corner movement, smiling evenly",
+            listOf(
+                "Keep your lips together.",
+                "Slowly smile, lifting the corners of your mouth.",
+                "Hold, then relax. Keep the smile small so both sides match.",
+            ),
+            reps = 10, sets = 1,
+            guide = face(FacePose(), FacePose(smile = 1f)),
+        ),
+        ex(
+            "face_pucker", "Pucker Your Lips", FACE, Level.EASY,
+            "Lip strength for drinking and speaking",
+            listOf(
+                "Push your lips forward as if to give a kiss or whistle.",
+                "Hold for a moment.",
+                "Relax, then gently smile. Repeat slowly.",
+            ),
+            reps = 10, sets = 1,
+            guide = face(FacePose(), FacePose(pucker = 1f)),
+        ),
+        ex(
+            "face_puff", "Puff Out Your Cheeks", FACE, Level.MEDIUM,
+            "Lip seal – stops drinks leaking from the mouth",
+            listOf(
+                "Close your lips firmly.",
+                "Fill your cheeks with air and hold.",
+                "Gently press the weak side of your lips with a finger if air escapes.",
+                "Let the air out slowly.",
+            ),
+            mode = Mode.HOLD, reps = 5, sets = 1, hold = 5,
+            guide = face(FacePose(), FacePose(puff = 1f)),
+        ),
+        ex(
+            "face_nose", "Wrinkle Your Nose", FACE, Level.EASY,
+            "Middle face movement",
+            listOf(
+                "Wrinkle your nose upwards, as if smelling something bad.",
+                "Hold for a moment.",
+                "Relax slowly.",
+            ),
+            reps = 10, sets = 1,
+            guide = face(FacePose(), FacePose(nose = 1f, brow = -0.3f)),
+        ),
+        ex(
+            "face_vowels", "Say A–E–I–O–U", FACE, Level.EASY,
+            "Clear speech and mouth movement",
+            listOf(
+                "Sit in front of a mirror.",
+                "Say each vowel slowly and clearly, making exaggerated mouth shapes: A, E, I, O, U.",
+                "Saying all five counts as one.",
+            ),
+            reps = 5, sets = 1,
+            guide = face(FacePose(mouthOpen = 0.8f), FacePose(pucker = 0.8f)),
+        ),
+        ex(
+            "face_massage", "Gentle Face Massage", FACE, Level.EASY,
+            "Relaxing tight muscles and keeping the face supple",
+            listOf(
+                "Use your fingertips on the weak side of your face.",
+                "Make small, slow circles over the forehead, cheek and around the mouth.",
+                "Gently stroke upwards from the jaw towards the ear.",
+            ),
+            listOf("Use light pressure. A little moisturiser helps your fingers glide."),
+            mode = Mode.HOLD, reps = 2, sets = 1, hold = 60, rest = 10,
+            guide = face(FacePose(), FacePose(smile = 0.2f)),
         ),
     )
 
